@@ -1,4 +1,4 @@
-FROM 523530352396.dkr.ecr.us-west-2.amazonaws.com/jenkins:2.375.2
+FROM 523530352396.dkr.ecr.us-west-2.amazonaws.com/hyperian-jenkins:2.375.2
 
 USER root
 
