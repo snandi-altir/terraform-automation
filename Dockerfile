@@ -23,4 +23,5 @@ RUN curl --silent --location --remote-name \
     mv kustomize_kustomize.v3.2.3_linux_amd64 /usr/local/bin/kustomize
 
 RUN apt-get update \
-    && apt-get install openjdk-17-jdk openjdk-17-jre -y
+    && apt-get install openjdk-17-jdk openjdk-17-jre -y \
+    && update-alternatives --install /opt/java/openjdk/bin/java java /usr/lib/jvm/java-1.17.0-openjdk-amd64 1
