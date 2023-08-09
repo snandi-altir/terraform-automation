@@ -24,3 +24,20 @@ RUN curl --silent --location --remote-name \
 
 RUN apt-get update \
     && apt-get install openjdk-17-jdk openjdk-17-jre -y
+
+ARG JAVA17_DIR='/home/java/jdk-17'
+
+ARG JAVA17_URL='https://download.oracle.com/java/17/latest'
+
+RUN set -eux; \
+    ARCH=$(uname -m) && \
+    # Java uses just x64 in the name of the tarball
+    if [ "$ARCH" = "x86_64" ]; \
+    then ARCH="x64"; \
+    fi && \
+    JAVA_PKG="$JAVA17_URL/jdk-17_linux-${ARCH}_bin.tar.gz" ; \
+    JAVA_SHA256=$(curl "$JAVA_PKG".sha256) ; \ 
+    curl --output /tmp/jdk.tgz "$JAVA_PKG" && \
+    echo "$JAVA_SHA256 */tmp/jdk.tgz" | sha256sum -c; \
+    mkdir -p "$JAVA17_DIR"; \
+    tar --extract --file /tmp/jdk.tgz --directory "$JAVA17_DIR" --strip-components 1    
