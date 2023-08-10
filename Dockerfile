@@ -1,6 +1,42 @@
-FROM 523530352396.dkr.ecr.us-west-2.amazonaws.com/hyperian-jenkins:2.375.2
-
+FROM jenkins/jenkins:2.418-jdk17
+# if we want to install via apt
 USER root
+
+ARG DOCKER_GID=996
+
+# installing docker
+# Install the latest Docker CE binaries and add user `jenkins` to the docker group
+RUN groupadd -g ${DOCKER_GID} docker 
+RUN apt-get update && \
+    apt-get install ca-certificates curl gnupg && \
+    install -m 0755 -d /etc/apt/keyrings && \
+    curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg && \
+    chmod a+r /etc/apt/keyrings/docker.gpg && \
+    echo \
+      "deb [arch="$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian \
+      "$(. /etc/os-release && echo "$VERSION_CODENAME")" stable" | \
+      tee /etc/apt/sources.list.d/docker.list > /dev/null && \
+    apt-get update && \
+    apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin -y && \
+    usermod -aG docker jenkins
+
+# Install node
+RUN curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.34.0/install.sh | bash
+RUN export NVM_DIR="$HOME/.nvm"
+
+# install maven
+RUN apt-get update && apt-get install -y maven 
+
+
+# install boto3
+RUN apt-get update && \
+    apt-get install python3 python3-pip -y && \
+    pip3 install boto3
+# install aws cli
+RUN pip3 install awscli --upgrade
+ 
+#CMD [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" # This loads nvm
+#CMD [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion" # This loads nvm bash_completion
 
 ENV TERRAFORM_VERSION=1.3.6
 
@@ -22,22 +58,6 @@ RUN curl --silent --location --remote-name \
     chmod a+x kustomize_kustomize.v3.2.3_linux_amd64 && \
     mv kustomize_kustomize.v3.2.3_linux_amd64 /usr/local/bin/kustomize
 
-RUN apt-get update \
-    && apt-get install openjdk-17-jdk openjdk-17-jre -y
-
-ARG JAVA17_DIR='/home/java/jdk-17'
-
-ARG JAVA17_URL='https://download.oracle.com/java/17/latest'
-
-RUN set -eux; \
-    ARCH=$(uname -m) && \
-    # Java uses just x64 in the name of the tarball
-    if [ "$ARCH" = "x86_64" ]; \
-    then ARCH="x64"; \
-    fi && \
-    JAVA_PKG="$JAVA17_URL/jdk-17_linux-${ARCH}_bin.tar.gz" ; \
-    JAVA_SHA256=$(curl "$JAVA_PKG".sha256) ; \ 
-    curl --output /tmp/jdk.tgz "$JAVA_PKG" && \
-    echo "$JAVA_SHA256 */tmp/jdk.tgz" | sha256sum -c; \
-    mkdir -p "$JAVA17_DIR"; \
-    tar --extract --file /tmp/jdk.tgz --directory "$JAVA17_DIR" --strip-components 1    
+# Cleanup
+RUN apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
