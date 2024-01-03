@@ -1,4 +1,4 @@
-FROM jenkins/jnlp-slave
+FROM jenkins/inbound-agent
 
 ENV TERRAFORM_VERSION=1.3.6
 
