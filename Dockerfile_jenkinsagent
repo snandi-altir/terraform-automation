@@ -14,7 +14,7 @@ RUN apt-get update -qqy \
     ca-certificates \
     tar zip unzip \
     wget curl \
-    git \
+    git-2.43.0 \
     build-essential \
     less nano tree \
     jq \
