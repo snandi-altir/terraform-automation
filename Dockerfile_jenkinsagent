@@ -1,4 +1,4 @@
-FROM jenkins/agent
+FROM jenkins/jnlp-agent-maven
 
 ENV TERRAFORM_VERSION=1.3.6
 
