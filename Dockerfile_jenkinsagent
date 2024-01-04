@@ -1,4 +1,4 @@
-FROM perionnet/jnlp-slave
+FROM khoyi/jnlp-slave
 
 ENV TERRAFORM_VERSION=1.3.6
 
