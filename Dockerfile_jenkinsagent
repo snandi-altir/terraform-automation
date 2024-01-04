@@ -1,4 +1,4 @@
-FROM jenkins/jnlp-agent-alpine
+FROM jenkins/jnlp-agent-jdk11
 
 ENV TERRAFORM_VERSION=1.3.6
 
