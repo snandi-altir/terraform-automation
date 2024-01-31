@@ -1,4 +1,4 @@
-FROM americans007/jnlp-slave:11jdk-s3cmd-root-v1.1.8
+FROM sachaminard/jnlp-slave-deb
 
 ENV TERRAFORM_VERSION=1.3.6
 
