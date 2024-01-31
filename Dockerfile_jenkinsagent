@@ -26,7 +26,8 @@ RUN apk update && \
         maven \
         bind-tools \
         aws-cli \
-        procps 
+        procps \
+        docker
 
 # Install AWS IAM Authenticator
 RUN curl -o /usr/bin/aws-iam-authenticator https://amazon-eks.s3.us-west-2.amazonaws.com/1.21.2/2021-07-05/bin/linux/amd64/aws-iam-authenticator \
@@ -36,9 +37,6 @@ RUN curl -o /usr/bin/aws-iam-authenticator https://amazon-eks.s3.us-west-2.amazo
 RUN pip install --upgrade pip setuptools \
     && pip install yq
 
-# Install Docker
-RUN curl -fsSL https://get.docker.com -o get-docker.sh \
-    && sh get-docker.sh
 
 # Add jenkins user to sudo and docker groups, set password
 RUN usermod -a -G sudo jenkins \
