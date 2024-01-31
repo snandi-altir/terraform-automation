@@ -8,8 +8,9 @@ RUN echo "deb http://deb.debian.org/debian buster main contrib\n" > /etc/apt/sou
     && echo "deb http://deb.debian.org/debian-security/ buster/updates main contrib\n" >> /etc/apt/sources.list \
     && echo "deb http://deb.debian.org/debian buster-updates main contrib\n" >> /etc/apt/sources.list
 
-RUN apt-get update -qqy \
-  && apt-get -qqy --no-install-recommends install \
+RUN apt --fix-broken install -qqy \
+    apt-get update -qqy \
+    && apt-get -qqy --no-install-recommends install \
     openssh-client ssh-askpass\
     ca-certificates \
     tar zip unzip \
