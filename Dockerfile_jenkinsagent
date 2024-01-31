@@ -33,20 +33,21 @@ RUN echo "deb http://deb.debian.org/debian buster main contrib\n" > /etc/apt/sou
 
 RUN apt-get update -qqy \
   && apt-get -qqy --no-install-recommends install \
-  openssh-client ssh-askpass\
-  ca-certificates \
-  tar zip unzip \
-  wget curl \
-  git \
-  build-essential \
-  less nano tree \
-  jq \
-  groff \
-  rlwrap \
-  rsync \
-  maven \
-  dnsutils \
-  procps \
+    openssh-client ssh-askpass\
+    ca-certificates \
+    tar zip unzip \
+    wget curl \
+    git \
+    build-essential \
+    less nano tree \
+    jq \
+     groff \
+    rlwrap \
+    rsync \
+    maven \
+    dnsutils \
+    awscli \
+    procps \
   && rm -rf /var/lib/apt/lists/*
 
 # install boto3
