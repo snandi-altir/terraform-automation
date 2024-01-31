@@ -23,39 +23,23 @@ RUN apt-get update -qqy \
     awscli \
     procps \
   && rm -rf /var/lib/apt/lists/*
-# Download and install Git 2.39.1 from source
 
-# install boto3
-RUN apt-get update && \
-    apt-get install python3 python3-pip -y && \
-    pip3 install boto3
+RUN rm -rf /usr/local/bin/aws
 
-# Verify Git installation
-RUN git --version
-  
+RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" \
+  && unzip -o awscliv2.zip \
+  && ./aws/install
+
 RUN curl -o aws-iam-authenticator https://amazon-eks.s3.us-west-2.amazonaws.com/1.21.2/2021-07-05/bin/linux/amd64/aws-iam-authenticator \
   && chmod +x ./aws-iam-authenticator \
   && cp ./aws-iam-authenticator /usr/bin/aws-iam-authenticator 
 
 RUN pip install --upgrade pip setuptools
+
 RUN pip install yq
 
-ARG DOCKER_GID=996
-
-RUN groupadd -g ${DOCKER_GID} docker 
-
-RUN apt-get update && \
-    apt-get remove docker* -y && \
-    apt-get install ca-certificates curl gnupg && \
-    install -m 0755 -d /etc/apt/keyrings && \
-    curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg && \
-    chmod a+r /etc/apt/keyrings/docker.gpg && \
-    echo \
-      "deb [arch="$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian \
-      "$(. /etc/os-release && echo "$VERSION_CODENAME")" stable" | \
-      tee /etc/apt/sources.list.d/docker.list > /dev/null && \
-    apt-get update && \
-    apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin -y
+RUN curl -fsSL https://get.docker.com -o get-docker.sh \
+  && sh get-docker.sh
 
 RUN usermod -a -G sudo jenkins \
   && usermod -a -G docker jenkins \
