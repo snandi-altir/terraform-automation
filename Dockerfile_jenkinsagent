@@ -1,4 +1,4 @@
-FROM surikaterna/jnlp-slave:7
+FROM ecc360/jnlp-slave-kubectl:inbound-agent4.13-1
 
 ENV TERRAFORM_VERSION=1.3.6
 
