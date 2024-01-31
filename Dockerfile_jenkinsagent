@@ -1,36 +1,6 @@
 FROM fethican/jnlp-slave-python3:v4.13.3-1
-
-ENV TERRAFORM_VERSION=1.5.5
-
+ENV TERRAFORM_VERSION=1.3.6
 USER root
-
-ARG JAVA17_DIR='/home/java/jdk-17'
-ARG JAVA17_URL='https://download.oracle.com/java/17/latest'
-ARG MVN3_VERSION='3.8.8'
-ARG MVN3_DIR="/home/mvn/mvn-${MVN3_VERSION}"
-ARG MVN3_URL="https://dlcdn.apache.org/maven/maven-3/${MVN3_VERSION}/binaries/apache-maven-${MVN3_VERSION}-bin.tar.gz"
-
-RUN set -eux; \
-  ARCH=$(uname -m) && \
-  # Java uses just x64 in the name of the tarball
-  if [ "$ARCH" = "x86_64" ]; \
-  then ARCH="x64"; \
-  fi && \
-  JAVA_PKG="$JAVA17_URL/jdk-17_linux-${ARCH}_bin.tar.gz" ; \
-  JAVA_SHA256=$(curl "$JAVA_PKG".sha256) ; \ 
-  curl --output /tmp/jdk.tgz "$JAVA_PKG" && \
-  echo "$JAVA_SHA256 */tmp/jdk.tgz" | sha256sum -c; \
-  mkdir -p "$JAVA17_DIR"; \
-  tar --extract --file /tmp/jdk.tgz --directory "$JAVA17_DIR" --strip-components 1
-
-RUN mkdir -p "$MVN3_DIR"; \
-  curl --output /tmp/mvn3.tgz "$MVN3_URL" && \
-  tar --extract --file /tmp/mvn3.tgz --directory "$MVN3_DIR" --strip-components 1
-
-RUN echo "deb http://deb.debian.org/debian buster main contrib\n" > /etc/apt/sources.list \
-  && echo "deb http://deb.debian.org/debian-security/ buster/updates main contrib\n" >> /etc/apt/sources.list \
-  && echo "deb http://deb.debian.org/debian buster-updates main contrib\n" >> /etc/apt/sources.list
-
 RUN apt-get update -qqy \
   && apt-get -qqy --no-install-recommends install \
     openssh-client ssh-askpass\
@@ -49,46 +19,57 @@ RUN apt-get update -qqy \
     awscli \
     procps \
   && rm -rf /var/lib/apt/lists/*
+# Download and install Git 2.39.1 from source
 
 # install boto3
 RUN apt-get update && \
     apt-get install python3 python3-pip -y && \
     pip3 install boto3
 
-RUN rm -rf /usr/local/bin/aws
-
-RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" \
-  && unzip -o awscliv2.zip \
-  && ./aws/install
+# Verify Git installation
+RUN git --version
 
 RUN curl -o aws-iam-authenticator https://amazon-eks.s3.us-west-2.amazonaws.com/1.21.2/2021-07-05/bin/linux/amd64/aws-iam-authenticator \
   && chmod +x ./aws-iam-authenticator \
   && cp ./aws-iam-authenticator /usr/bin/aws-iam-authenticator 
 
 RUN pip install --upgrade pip setuptools
-
 RUN pip install yq
 
-RUN curl -fsSL https://get.docker.com -o get-docker.sh \
-  && sh get-docker.sh
+ARG DOCKER_GID=996
+
+RUN groupadd -g ${DOCKER_GID} docker 
+
+RUN apt-get update && \
+    apt-get remove docker* -y && \
+    apt-get install ca-certificates curl gnupg && \
+    install -m 0755 -d /etc/apt/keyrings && \
+    curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg && \
+    chmod a+r /etc/apt/keyrings/docker.gpg && \
+    echo \
+      "deb [arch="$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian \
+      "$(. /etc/os-release && echo "$VERSION_CODENAME")" stable" | \
+      tee /etc/apt/sources.list.d/docker.list > /dev/null && \
+    apt-get update && \
+    apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin -y
 
 RUN usermod -a -G sudo jenkins \
   && usermod -a -G docker jenkins \
   && echo 'ALL ALL = (ALL) NOPASSWD: ALL' >> /etc/sudoers \
   && echo 'jenkins:secret' | chpasswd
-
-RUN curl https://storage.googleapis.com/kubernetes-release/release/v1.27.4/bin/linux/amd64/kubectl -o /usr/local/bin/kubectl && chmod +x /usr/local/bin/kubectl
-
+RUN curl https://storage.googleapis.com/kubernetes-release/release/v1.26.0/bin/linux/amd64/kubectl -o /usr/local/bin/kubectl && chmod +x /usr/local/bin/kubectl
 RUN curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 && chmod +x get_helm.sh && ./get_helm.sh
+RUN curl -LO https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip \
+    && unzip '*.zip' -d /usr/local/bin \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* *.zip
+RUN wget https://download.java.net/openjdk/jdk17/ri/openjdk-17+35_linux-x64_bin.tar.gz && \
+    tar xvf openjdk-17+35_linux-x64_bin.tar.gz && \
+    mv jdk-17*/ /opt/jdk17
+RUN wget https://dlcdn.apache.org/maven/maven-3/3.8.8/binaries/apache-maven-3.8.8-bin.tar.gz && \
+    tar -xvzf apache-maven-3.8.8-bin.tar.gz && \
+    mv apache-maven-3.8.8 /opt/maven
 
-# RUN curl -LO https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip \
-#   && unzip '*.zip' -d /usr/local/bin \
-#   && apt-get clean \
-#   && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* *.zip
-
-RUN apt-get clean \
-  && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* *.zip
-
-ADD run.sh /etc/
+COPY run.sh /etc/
 
 ENTRYPOINT ["/etc/run.sh"]
