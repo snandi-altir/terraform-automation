@@ -45,7 +45,7 @@ ARG DOCKER_GID=996
 RUN groupadd -g ${DOCKER_GID} docker 
 
 RUN apt-get update && \
-    apt-get remove docker* -y \
+    apt-get remove docker* -y && \
     apt-get install ca-certificates curl gnupg && \
     install -m 0755 -d /etc/apt/keyrings && \
     curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg && \
