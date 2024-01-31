@@ -15,7 +15,7 @@ RUN apt-get update -qqy \
     build-essential \
     less nano tree \
     jq \
-    python python-pip groff \
+     groff \
     rlwrap \
     rsync \
     maven \
