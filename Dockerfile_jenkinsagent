@@ -36,6 +36,7 @@ RUN git --version
 RUN curl -o aws-iam-authenticator https://amazon-eks.s3.us-west-2.amazonaws.com/1.21.2/2021-07-05/bin/linux/amd64/aws-iam-authenticator \
   && chmod +x ./aws-iam-authenticator \
   && cp ./aws-iam-authenticator /usr/bin/aws-iam-authenticator 
+
 RUN pip install --upgrade pip setuptools
 RUN pip install yq
 
@@ -44,7 +45,7 @@ ARG DOCKER_GID=996
 RUN groupadd -g ${DOCKER_GID} docker 
 
 RUN apt-get update && \
-    apt-get remove docker* -y
+    apt-get remove docker* -y \
     apt-get install ca-certificates curl gnupg && \
     install -m 0755 -d /etc/apt/keyrings && \
     curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg && \
