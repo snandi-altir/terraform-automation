@@ -1,71 +1,62 @@
-FROM rahusona/jnlp-slave:4.13.3-1-alpine-jdk11
+FROM surikaterna/jnlp-slave:7
 
 ENV TERRAFORM_VERSION=1.3.6
 
 USER root
-
-# Update Alpine Linux packages and install necessary packages
-RUN apk update && \
-    apk upgrade && \
-    apk add --no-cache \
-        curl \
-        ca-certificates \
-        openssl \
-        libcurl \
-        git \
-        build-base \
-        less \
-        nano \
-        tree \
-        jq \
-        python3 \
-        py3-pip \
-        groff \
-        rlwrap \
-        rsync \
-        maven \
-        bind-tools \
-        aws-cli \
-        procps \
-        docker
-
-# Install AWS IAM Authenticator
-RUN curl -o /usr/bin/aws-iam-authenticator https://amazon-eks.s3.us-west-2.amazonaws.com/1.21.2/2021-07-05/bin/linux/amd64/aws-iam-authenticator \
-    && chmod +x /usr/bin/aws-iam-authenticator
-
-# Upgrade pip and install yq
-RUN pip install --upgrade pip setuptools \
-    && pip install yq
-
-
-# Add jenkins user to sudo and docker groups, set password
+RUN echo "deb http://deb.debian.org/debian buster main contrib\n" > /etc/apt/sources.list \
+    && echo "deb http://deb.debian.org/debian-security/ buster/updates main contrib\n" >> /etc/apt/sources.list \
+    && echo "deb http://deb.debian.org/debian buster-updates main contrib\n" >> /etc/apt/sources.list
+RUN apt-get update -qqy \
+  && apt-get -qqy --no-install-recommends install \
+    openssh-client ssh-askpass\
+    ca-certificates \
+    tar zip unzip \
+    wget curl \
+    git \
+    build-essential \
+    less nano tree \
+    jq \
+    python python-pip groff \
+    rlwrap \
+    rsync \
+    maven \
+    dnsutils \
+    awscli \
+    procps \
+  && rm -rf /var/lib/apt/lists/*
+# Download and install Git 2.39.1 from source
+ARG GIT_VERSION=2.39.1
+RUN wget https://www.kernel.org/pub/software/scm/git/git-${GIT_VERSION}.tar.gz | tar xz && \
+    cd git-${GIT_VERSION} && \
+    make prefix=/usr/local all && \
+    make prefix=/usr/local install && \
+    cd .. && \
+    rm -rf git-${GIT_VERSION}
+# Verify Git installation
+RUN git --version
+  
+RUN curl -o aws-iam-authenticator https://amazon-eks.s3.us-west-2.amazonaws.com/1.21.2/2021-07-05/bin/linux/amd64/aws-iam-authenticator \
+  && chmod +x ./aws-iam-authenticator \
+  && cp ./aws-iam-authenticator /usr/bin/aws-iam-authenticator 
+RUN pip install --upgrade pip setuptools
+RUN pip install yq
+RUN curl -fsSL https://get.docker.com -o get-docker.sh \
+    && sh get-docker.sh
 RUN usermod -a -G sudo jenkins \
-    && usermod -a -G docker jenkins \
-    && echo 'ALL ALL = (ALL) NOPASSWD: ALL' >> /etc/sudoers \
-    && echo 'jenkins:secret' | chpasswd
-
-# Install kubectl
-RUN curl -o /usr/local/bin/kubectl https://storage.googleapis.com/kubernetes-release/release/v1.26.0/bin/linux/amd64/kubectl \
-    && chmod +x /usr/local/bin/kubectl
-
-# Install Helm
-RUN curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 \
-    && chmod +x get_helm.sh \
-    && ./get_helm.sh
-
-# Install Terraform
-RUN wget https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip \
-    && unzip terraform_${TERRAFORM_VERSION}_linux_amd64.zip -d /usr/local/bin \
-    && rm terraform_${TERRAFORM_VERSION}_linux_amd64.zip
-
-# Install OpenJDK
-RUN wget -O - https://download.java.net/openjdk/jdk17/ri/openjdk-17+35_linux-x64_bin.tar.gz | tar -xz -C /opt/
-
-# Install Maven
-RUN wget -O - https://dlcdn.apache.org/maven/maven-3/3.8.8/binaries/apache-maven-3.8.8-bin.tar.gz | tar -xz -C /opt/
-
-# Copy run.sh script
-COPY run.sh /etc/run.sh
-
-# Set entry point
+  && usermod -a -G docker jenkins \
+  && echo 'ALL ALL = (ALL) NOPASSWD: ALL' >> /etc/sudoers \
+  && echo 'jenkins:secret' | chpasswd
+RUN curl https://storage.googleapis.com/kubernetes-release/release/v1.26.0/bin/linux/amd64/kubectl -o /usr/local/bin/kubectl && chmod +x /usr/local/bin/kubectl
+RUN curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 && chmod +x get_helm.sh && ./get_helm.sh
+RUN curl -LO https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip \
+    && unzip '*.zip' -d /usr/local/bin \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* *.zip
+RUN wget https://download.java.net/openjdk/jdk17/ri/openjdk-17+35_linux-x64_bin.tar.gz && \
+    tar xvf openjdk-17+35_linux-x64_bin.tar.gz && \
+    mv jdk-17*/ /opt/jdk17
+RUN wget https://dlcdn.apache.org/maven/maven-3/3.8.8/binaries/apache-maven-3.8.8-bin.tar.gz && \
+    tar -xvzf apache-maven-3.8.8-bin.tar.gz && \
+    mv apache-maven-3.8.8 /opt/maven
+ADD run.sh /etc/
 ENTRYPOINT ["/etc/run.sh"]
