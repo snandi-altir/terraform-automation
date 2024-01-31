@@ -1,4 +1,4 @@
-FROM odavid/jenkins-jnlp-slave:4.13-2-35-alpine
+FROM vdawork/jnlp-slave:11jdk-s3cmd-root-v1.1.9
 
 ENV TERRAFORM_VERSION=1.3.6
 
