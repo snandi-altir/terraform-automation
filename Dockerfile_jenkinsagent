@@ -57,4 +57,7 @@ RUN wget https://dlcdn.apache.org/maven/maven-3/3.8.8/binaries/apache-maven-3.8.
     tar -xvzf apache-maven-3.8.8-bin.tar.gz && \
     mv apache-maven-3.8.8 /opt/maven
 ADD run.sh /etc/
+
+RUN chmod +x /etc/run.sh
+
 ENTRYPOINT ["/etc/run.sh"]
