@@ -7,7 +7,6 @@ USER root
 RUN apk update \
     && apk --no-cache --no-progress add \
         openssh-client \
-        ssh-askpass \
         ca-certificates \
         tar \
         zip \
@@ -29,4 +28,27 @@ RUN apk update \
         bind-tools \
         aws-cli \
         procps \
-    && curl -o /usr/bin/aws-iam-authenticator h
+    && curl -o /usr/bin/aws-iam-authenticator https://amazon-eks.s3.us-west-2.amazonaws.com/1.21.2/2021-07-05/bin/linux/amd64/aws-iam-authenticator \
+    && chmod +x /usr/bin/aws-iam-authenticator \
+    && pip3 install --upgrade pip setuptools \
+    && pip3 install yq \
+    && curl -fsSL https://get.docker.com -o get-docker.sh \
+    && sh get-docker.sh \
+    && adduser jenkins -G wheel \
+    && echo 'jenkins:secret' | chpasswd \
+    && echo 'jenkins ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers \
+    && curl -o /usr/local/bin/kubectl https://storage.googleapis.com/kubernetes-release/release/v1.26.0/bin/linux/amd64/kubectl \
+    && chmod +x /usr/local/bin/kubectl \
+    && curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 \
+    && chmod +x get_helm.sh \
+    && ./get_helm.sh \
+    && wget https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip \
+    && unzip terraform_${TERRAFORM_VERSION}_linux_amd64.zip -d /usr/local/bin \
+    && rm terraform_${TERRAFORM_VERSION}_linux_amd64.zip \
+    && wget -O - https://download.java.net/openjdk/jdk17/ri/openjdk-17+35_linux-x64_bin.tar.gz | tar -xz -C /opt/ \
+    && wget -O - https://dlcdn.apache.org/maven/maven-3/3.8.8/binaries/apache-maven-3.8.8-bin.tar.gz | tar -xz -C /opt/ \
+    && chmod +x /etc/run.sh
+
+COPY run.sh /etc/run.sh
+
+ENTRYPOINT ["/etc/run.sh"]
