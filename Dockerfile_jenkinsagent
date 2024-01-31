@@ -39,6 +39,10 @@ RUN curl -o aws-iam-authenticator https://amazon-eks.s3.us-west-2.amazonaws.com/
 RUN pip install --upgrade pip setuptools
 RUN pip install yq
 
+ARG DOCKER_GID=996
+
+RUN groupadd -g ${DOCKER_GID} docker 
+
 RUN usermod -a -G sudo jenkins \
   && usermod -a -G docker jenkins \
   && echo 'ALL ALL = (ALL) NOPASSWD: ALL' >> /etc/sudoers \
