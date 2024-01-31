@@ -11,7 +11,22 @@ RUN apk update && \
         curl \
         ca-certificates \
         openssl \
-        libcurl
+        libcurl \
+        git \
+        build-base \
+        less \
+        nano \
+        tree \
+        jq \
+        python3 \
+        py3-pip \
+        groff \
+        rlwrap \
+        rsync \
+        maven \
+        bind-tools \
+        aws-cli \
+        procps \
 
 # Install AWS IAM Authenticator
 RUN curl -o /usr/bin/aws-iam-authenticator https://amazon-eks.s3.us-west-2.amazonaws.com/1.21.2/2021-07-05/bin/linux/amd64/aws-iam-authenticator \
