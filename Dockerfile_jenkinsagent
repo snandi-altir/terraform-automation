@@ -19,15 +19,11 @@ RUN apt-get update -qqy \
     awscli \
     procps \
   && rm -rf /var/lib/apt/lists/*
-# Download and install Git 2.39.1 from source
 
 # install boto3
 RUN apt-get update && \
     apt-get install python3 python3-pip -y && \
     pip3 install boto3
-
-# Verify Git installation
-RUN git --version
 
 RUN curl -o aws-iam-authenticator https://amazon-eks.s3.us-west-2.amazonaws.com/1.21.2/2021-07-05/bin/linux/amd64/aws-iam-authenticator \
   && chmod +x ./aws-iam-authenticator \
@@ -59,15 +55,22 @@ RUN usermod -a -G sudo jenkins \
   && usermod -a -G docker jenkins \
   && echo 'ALL ALL = (ALL) NOPASSWD: ALL' >> /etc/sudoers \
   && echo 'jenkins:secret' | chpasswd
+
+RUN curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp && sudo mv /tmp/eksctl /usr/local/bin && eksctl version
+
 RUN curl https://storage.googleapis.com/kubernetes-release/release/v1.26.0/bin/linux/amd64/kubectl -o /usr/local/bin/kubectl && chmod +x /usr/local/bin/kubectl
+
 RUN curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 && chmod +x get_helm.sh && ./get_helm.sh
+
 RUN curl -LO https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip \
     && unzip '*.zip' -d /usr/local/bin \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* *.zip
+
 RUN wget https://download.java.net/openjdk/jdk17/ri/openjdk-17+35_linux-x64_bin.tar.gz && \
     tar xvf openjdk-17+35_linux-x64_bin.tar.gz && \
     mv jdk-17*/ /opt/jdk17
+
 RUN wget https://dlcdn.apache.org/maven/maven-3/3.8.8/binaries/apache-maven-3.8.8-bin.tar.gz && \
     tar -xvzf apache-maven-3.8.8-bin.tar.gz && \
     mv apache-maven-3.8.8 /opt/maven
